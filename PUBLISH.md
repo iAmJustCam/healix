@@ -1,56 +1,41 @@
-# Publishing Guide for stack-align
+# Publishing Guide for Healix
 
-This document outlines the process for publishing the stack-align CLI tool to npm.
+This document outlines the process for publishing the Healix CLI tool to npm.
 
 ## Prerequisites
 
-1. You need an npm account with appropriate permissions to publish to the `stack-align` package
+1. You need an npm account with appropriate permissions to publish to the `healix` package
 2. You need to be logged in to npm with `npm login`
 3. Ensure you have the latest code from the GitHub repository
 
 ## Publishing Process
 
-### 1. Prepare for Release
+### 1. Using the Simplified Publish Method
 
-1. Update the version in package.json:
-   ```bash
-   # For a patch release (bug fixes)
-   npm version patch
-
-   # For a minor release (new features, backward compatible)
-   npm version minor
-   
-   # For a major release (breaking changes)
-   npm version major
-   ```
-
-   This will:
-   - Update the version in package.json
-   - Create a git tag
-   - Format and stage the code
-
-2. Push changes to GitHub:
-   ```bash
-   git push && git push --tags
-   ```
-
-### 2. Build and Publish
-
-The package is configured to automatically build before publishing, but you can manually ensure everything is ready:
+For the initial release, we're using a simplified package.json to make the package more lightweight:
 
 ```bash
-# Clean and build
-npm run clean && npm run build
+# Navigate to the repository 
+cd /Users/cameroncatri/Desktop/healer
 
-# Run tests
-npm test
-```
+# Use the simplified package.json for publication
+cp package.publish.json temp-package.json
+mv package.json package.json.bak
+mv temp-package.json package.json
 
-When ready to publish:
-
-```bash
 # Publish to npm
 npm publish --access public
+
+# Restore original package.json
+mv package.json.bak package.json
+```
+
+### 2. Prepare for Future Releases
+
+For future releases, update the version in package.publish.json:
+
+```bash
+# Edit the version number in package.publish.json before publishing
 ```
 
 ### 3. Verify the Published Package
@@ -59,14 +44,14 @@ After publishing, verify the package works correctly:
 
 ```bash
 # Create a temporary directory
-mkdir /tmp/test-stack-align && cd /tmp/test-stack-align
+mkdir /tmp/test-healix && cd /tmp/test-healix
 
 # Run the CLI directly using npx
-npx stack-align --help
+npx healix --help
 
 # Or install globally and test
-npm install -g stack-align
-stack-align --help
+npm install -g healix
+healix --help
 ```
 
 ## Troubleshooting
@@ -74,20 +59,22 @@ stack-align --help
 If you encounter publishing issues:
 
 1. Check that you're logged in to npm with the correct account
+
    ```bash
    npm whoami
    ```
 
 2. Verify that the version you're trying to publish is unique
+
    ```bash
-   npm view stack-align versions
+   npm view healix versions
    ```
 
-3. Ensure the package.json and .npmignore files are correctly configured
+3. Ensure the package.json and CLI entry points are correctly configured
 
 4. If the package was published with errors, you can unpublish within 72 hours:
    ```bash
-   npm unpublish stack-align@x.x.x
+   npm unpublish healix@x.x.x
    ```
 
 ## Automated CI/CD (Future Enhancement)

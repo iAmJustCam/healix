@@ -84,7 +84,7 @@ export interface LearningRecommendation {
 // System types
 export interface ProjectContext {
   rootDir: string;
-  project: import('ts-morph').Project;
+  project: import("ts-morph").Project;
   projectName: string;
   tsconfig?: {
     path: string;
@@ -122,7 +122,7 @@ export interface ComponentContext {
 }
 
 export interface ValidationIssue {
-  type: 'error' | 'warning' | 'suggestion';
+  type: "error" | "warning" | "suggestion";
   message: string;
   filePath: string;
   line: number;

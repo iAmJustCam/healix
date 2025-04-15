@@ -1,0 +1,32 @@
+# Healix ignore file
+# Similar to .gitignore, this file specifies patterns that Healix should ignore during analysis
+
+# Dependencies
+node_modules/
+bower_components/
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+
+# Cache and temporary files
+.cache/
+.temp/
+tmp/
+.DS_Store
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Generated files
+*.generated.*
+generated/
+__generated__/
+
+# Example patterns for specific file types
+# *.test.tsx
+# *.stories.tsx
+# **/*.d.ts

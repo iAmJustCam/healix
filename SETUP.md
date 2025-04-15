@@ -1,6 +1,6 @@
-# Stack Align CLI Setup
+# Healix CLI Setup
 
-This document describes how to set up and use the Stack Align CLI tool.
+This document describes how to set up and use the Healix CLI tool.
 
 ## Building the Project
 
@@ -19,39 +19,43 @@ After building the project, you can use the CLI in several ways:
 ### As a Local Dependency
 
 1. Install in your project:
+
    ```bash
-   npm install --save-dev stack-align
+   npm install --save-dev healix
    ```
 
 2. Use with npx:
    ```bash
-   npx stack-align check
-   npx stack-align align --dry-run
+   npx healix health
+   npx healix heal --dry-run
    ```
 
 ### As a Global Command
 
 1. Install globally:
+
    ```bash
-   npm install -g stack-align
+   npm install -g healix
    ```
 
 2. Use directly:
    ```bash
-   stack-align check
-   stack-align align --max-fix 20
+   healix health
+   healix heal --limit 20
    ```
 
 ### For Development
 
 1. Link the package to your global bin:
+
    ```bash
    npm run link-dev
    ```
 
 2. Use the linked command:
+
    ```bash
-   stack-align check
+   healix health
    ```
 
 3. Unlink when done:
@@ -59,25 +63,36 @@ After building the project, you can use the CLI in several ways:
    npm run unlink-dev
    ```
 
-## Commands and Aliases
+## Commands
 
-| Original Command | Aliases | Description |
-|------------------|---------|-------------|
-| `analyze` | `check` | Analyze project code |
-| `heal` | `align` | Fix detected issues |
-| `test:generate` | `generate-tests` | Generate tests for components |
-| `analyze --save file.html --report html` | `report` | Save analysis to file |
+| Command                               | Description                                 |
+| ------------------------------------- | ------------------------------------------- |
+| `health`                              | Check the health of your codebase           |
+| `heal`                                | Fix detected health issues                  |
+| `heal --generate-tests`               | Generate tests for fixed components         |
+| `health --save file.html --report html` | Save health report to file               |
+
+## Backward Compatibility
+
+For users familiar with the previous "stack-align" commands, we maintain aliases:
+
+| New Command     | Legacy Alias      | Description                   |
+| --------------- | ----------------- | ----------------------------- |
+| `health`        | `check`           | Check codebase health         |
+| `heal`          | `align`           | Fix detected issues           |
 
 ## Troubleshooting
 
 If you encounter issues running the CLI:
 
 1. Make sure the project is built:
+
    ```bash
    npm run build
    ```
 
 2. Check that the bin file is executable:
+
    ```bash
    chmod +x bin/cli.js
    ```

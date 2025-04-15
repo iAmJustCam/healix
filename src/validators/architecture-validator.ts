@@ -2,14 +2,18 @@
 import path from "path";
 import fs from "fs";
 import { Node, SyntaxKind } from "ts-morph";
-import type { ProjectContext, ValidationIssue, ValidationResult } from "../types";
+import type {
+  ProjectContext,
+  ValidationIssue,
+  ValidationResult,
+} from "../types";
 import { scanProject } from "../utils/project-scanner";
 
 /**
  * Validates project architecture against established guidelines
  */
 export async function validateArchitecture(
-  context: ProjectContext
+  context: ProjectContext,
 ): Promise<ValidationResult> {
   const issues: ValidationIssue[] = [];
 
@@ -39,7 +43,7 @@ export async function validateArchitecture(
  * Validates directory structure follows flat organization (≤2 levels deep)
  */
 async function validateDirectoryStructure(
-  context: ProjectContext
+  context: ProjectContext,
 ): Promise<ValidationIssue[]> {
   const issues: ValidationIssue[] = [];
   const srcDir = path.join(context.rootDir, "src");
@@ -95,9 +99,10 @@ async function validateDirectoryStructure(
 
   // Validate required directory structure
   const requiredDirs = ["components", "hooks", "types", "utils"];
-  const srcDirs = fs.readdirSync(srcDir, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory())
-    .map(dirent => dirent.name);
+  const srcDirs = fs
+    .readdirSync(srcDir, { withFileTypes: true })
+    .filter((dirent) => dirent.isDirectory())
+    .map((dirent) => dirent.name);
 
   for (const required of requiredDirs) {
     if (!srcDirs.includes(required)) {
@@ -124,7 +129,7 @@ async function validateDirectoryStructure(
  * Validates file naming conventions (kebab-case for files, PascalCase for components)
  */
 async function validateFileNaming(
-  context: ProjectContext
+  context: ProjectContext,
 ): Promise<ValidationIssue[]> {
   const issues: ValidationIssue[] = [];
   const srcDir = path.join(context.rootDir, "src");
@@ -159,7 +164,7 @@ async function validateFileNaming(
           oldPath: filePath,
           newPath: path.join(
             path.dirname(filePath),
-            toKebabCase(basename.split(".")[0]) + path.extname(basename)
+            toKebabCase(basename.split(".")[0]) + path.extname(basename),
           ),
           description: `Rename file to use kebab-case`,
         },
@@ -171,12 +176,17 @@ async function validateFileNaming(
     if (!sourceFile) continue;
 
     // Find component declarations
-    const exportedVariables = sourceFile.getVariableDeclarations().filter(decl => {
-      const declarationList = decl.getFirstAncestorByKind(SyntaxKind.VariableDeclarationList);
-      const exportKeyword = declarationList?.getFirstAncestorByKind(SyntaxKind.VariableStatement)
-        ?.getFirstModifierByKind(SyntaxKind.ExportKeyword);
-      return !!exportKeyword;
-    });
+    const exportedVariables = sourceFile
+      .getVariableDeclarations()
+      .filter((decl) => {
+        const declarationList = decl.getFirstAncestorByKind(
+          SyntaxKind.VariableDeclarationList,
+        );
+        const exportKeyword = declarationList
+          ?.getFirstAncestorByKind(SyntaxKind.VariableStatement)
+          ?.getFirstModifierByKind(SyntaxKind.ExportKeyword);
+        return !!exportKeyword;
+      });
 
     for (const variable of exportedVariables) {
       const componentName = variable.getName();
@@ -207,7 +217,7 @@ async function validateFileNaming(
  * Validates barrel exports (index.ts files)
  */
 async function validateBarrelExports(
-  context: ProjectContext
+  context: ProjectContext,
 ): Promise<ValidationIssue[]> {
   const issues: ValidationIssue[] = [];
   const srcDir = path.join(context.rootDir, "src");
@@ -244,17 +254,23 @@ async function validateBarrelExports(
         if (!indexFile) continue;
 
         // Get all files in the directory (excluding index.ts and test files)
-        const dirFiles = fs.readdirSync(dirPath)
-          .filter(file => file.endsWith('.ts') || file.endsWith('.tsx'))
-          .filter(file => file !== 'index.ts' && !file.includes('.test.') && !file.includes('.spec.'));
-        
+        const dirFiles = fs
+          .readdirSync(dirPath)
+          .filter((file) => file.endsWith(".ts") || file.endsWith(".tsx"))
+          .filter(
+            (file) =>
+              file !== "index.ts" &&
+              !file.includes(".test.") &&
+              !file.includes(".spec."),
+          );
+
         // Get all export declarations from the barrel file
         const exportDeclarations = indexFile.getExportDeclarations();
         const exportedModules = exportDeclarations
-          .map(exp => exp.getModuleSpecifierValue())
+          .map((exp) => exp.getModuleSpecifierValue())
           .filter(Boolean as any)
-          .map(specifier => {
-            if (specifier?.startsWith('./')) {
+          .map((specifier) => {
+            if (specifier?.startsWith("./")) {
               return specifier.substring(2); // Remove './'
             }
             return specifier;
@@ -262,7 +278,7 @@ async function validateBarrelExports(
 
         for (const file of dirFiles) {
           const baseName = file.split(".")[0];
-          
+
           if (!exportedModules.includes(baseName)) {
             issues.push({
               type: "warning",
@@ -291,7 +307,7 @@ async function validateBarrelExports(
  * Validates type definitions are properly located in src/types
  */
 async function validateTypeDefinitions(
-  context: ProjectContext
+  context: ProjectContext,
 ): Promise<ValidationIssue[]> {
   const issues: ValidationIssue[] = [];
   const srcDir = path.join(context.rootDir, "src");
@@ -320,11 +336,11 @@ async function validateTypeDefinitions(
     // Check interfaces
     for (const interfaceDecl of interfaces) {
       const name = interfaceDecl.getName();
-      if (name.endsWith('Props')) {
+      if (name.endsWith("Props")) {
         // Check if this is used in multiple files - if so, it should be in types directory
         const isUsedInMultipleFiles = await isTypeUsedInMultipleFiles(
           context,
-          name
+          name,
         );
 
         if (isUsedInMultipleFiles) {
@@ -359,11 +375,11 @@ async function validateTypeDefinitions(
     // Check type aliases
     for (const typeAlias of typeAliases) {
       const name = typeAlias.getName();
-      if (name.endsWith('Props')) {
+      if (name.endsWith("Props")) {
         // Check if this is used in multiple files - if so, it should be in types directory
         const isUsedInMultipleFiles = await isTypeUsedInMultipleFiles(
           context,
-          name
+          name,
         );
 
         if (isUsedInMultipleFiles) {
@@ -403,10 +419,10 @@ async function validateTypeDefinitions(
  * Validates separation of concerns (data fetching in hooks, not components)
  */
 async function validateServiceSeparation(
-  context: ProjectContext
+  context: ProjectContext,
 ): Promise<ValidationIssue[]> {
   const issues: ValidationIssue[] = [];
-  
+
   // Scan project to get component files
   const scanResult = await scanProject(context);
   const componentFiles = scanResult.componentFiles;
@@ -416,32 +432,38 @@ async function validateServiceSeparation(
     if (!sourceFile) continue;
 
     // Check for "use client" directive
-    const isServerComponent = !sourceFile.getFullText().includes('"use client"');
+    const isServerComponent = !sourceFile
+      .getFullText()
+      .includes('"use client"');
 
     // Check for fetch operations using ts-morph
-    const callExpressions = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression);
-    const hasFetch = callExpressions.some(call => {
+    const callExpressions = sourceFile.getDescendantsOfKind(
+      SyntaxKind.CallExpression,
+    );
+    const hasFetch = callExpressions.some((call) => {
       const expression = call.getExpression();
-      return Node.isIdentifier(expression) && expression.getText() === 'fetch';
+      return Node.isIdentifier(expression) && expression.getText() === "fetch";
     });
 
-    const hasAxios = callExpressions.some(call => {
+    const hasAxios = callExpressions.some((call) => {
       const expression = call.getExpression();
       if (Node.isPropertyAccessExpression(expression)) {
         const object = expression.getExpression();
         const property = expression.getName();
-        return Node.isIdentifier(object) && 
-               object.getText() === 'axios' && 
-               (property === 'get' || property === 'post');
+        return (
+          Node.isIdentifier(object) &&
+          object.getText() === "axios" &&
+          (property === "get" || property === "post")
+        );
       }
       return false;
     });
 
     // Check if component imports use from React (for React 19 hook)
-    const hasUseImport = sourceFile.getImportDeclarations().some(imp => {
-      if (imp.getModuleSpecifierValue() === 'react') {
+    const hasUseImport = sourceFile.getImportDeclarations().some((imp) => {
+      if (imp.getModuleSpecifierValue() === "react") {
         const namedImports = imp.getNamedImports();
-        return namedImports.some(named => named.getName() === 'use');
+        return namedImports.some((named) => named.getName() === "use");
       }
       return false;
     });
@@ -477,16 +499,19 @@ async function validateServiceSeparation(
  */
 async function isTypeUsedInMultipleFiles(
   context: ProjectContext,
-  typeName: string
+  typeName: string,
 ): Promise<boolean> {
-  const references = context.project.getSourceFiles().flatMap(sourceFile => {
-    return sourceFile.getDescendantsOfKind(SyntaxKind.Identifier)
-      .filter(id => id.getText() === typeName);
+  const references = context.project.getSourceFiles().flatMap((sourceFile) => {
+    return sourceFile
+      .getDescendantsOfKind(SyntaxKind.Identifier)
+      .filter((id) => id.getText() === typeName);
   });
 
   // Get unique file paths
-  const filePaths = new Set(references.map(ref => ref.getSourceFile().getFilePath()));
-  
+  const filePaths = new Set(
+    references.map((ref) => ref.getSourceFile().getFilePath()),
+  );
+
   // If used in more than one file, it should be in types directory
   return filePaths.size > 1;
 }
@@ -504,21 +529,21 @@ function getDirectoryDepth(dir: string, rootDir: string): number {
  */
 async function getAllDirectories(rootDir: string): Promise<string[]> {
   const result: string[] = [];
-  
+
   // Get immediate subdirectories
   const entries = fs.readdirSync(rootDir, { withFileTypes: true });
-  const dirs = entries.filter(entry => entry.isDirectory());
-  
+  const dirs = entries.filter((entry) => entry.isDirectory());
+
   // Add each directory and recursively get its subdirectories
   for (const dir of dirs) {
     const dirPath = path.join(rootDir, dir.name);
     result.push(dirPath);
-    
+
     // Recursively get subdirectories
     const subDirs = await getAllDirectories(dirPath);
     result.push(...subDirs);
   }
-  
+
   return result;
 }
 

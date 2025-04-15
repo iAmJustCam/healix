@@ -1,13 +1,17 @@
-import * as path from 'path';
-import { Node, SyntaxKind, SourceFile } from 'ts-morph';
-import type { ProjectContext, ValidationIssue, ValidationResult } from '../types';
-import { scanProject } from '../utils/project-scanner';
+import * as path from "path";
+import { Node, SyntaxKind, SourceFile } from "ts-morph";
+import type {
+  ProjectContext,
+  ValidationIssue,
+  ValidationResult,
+} from "../types";
+import { scanProject } from "../utils/project-scanner";
 
 /**
  * Validates React 19 implementation in a project
  */
 export async function validateReact19Implementation(
-  context: ProjectContext
+  context: ProjectContext,
 ): Promise<ValidationResult> {
   const issues: ValidationIssue[] = [];
 
@@ -16,12 +20,14 @@ export async function validateReact19Implementation(
   const componentFiles = scanResult.componentFiles;
   const hookFiles = scanResult.hookFiles;
 
-  console.log(`Found ${componentFiles.length} component files and ${hookFiles.length} hook files to validate`);
+  console.log(
+    `Found ${componentFiles.length} component files and ${hookFiles.length} hook files to validate`,
+  );
 
   // Validate components
   for (const filePath of componentFiles) {
     // Skip test files
-    if (filePath.includes('.test.') || filePath.includes('.spec.')) {
+    if (filePath.includes(".test.") || filePath.includes(".spec.")) {
       continue;
     }
 
@@ -29,11 +35,13 @@ export async function validateReact19Implementation(
     const sourceFile = context.project.getSourceFile(filePath);
     if (!sourceFile) continue;
 
-    console.log(`Analyzing React implementation in: ${path.basename(filePath)}`);
+    console.log(
+      `Analyzing React implementation in: ${path.basename(filePath)}`,
+    );
 
     // Extract component context from source file
     const componentContext = extractComponentContext(sourceFile, filePath);
-    
+
     // Skip non-component files (utilities, etc.)
     if (!componentContext.isComponent) {
       continue;
@@ -48,7 +56,10 @@ export async function validateReact19Implementation(
     issues.push(...hookIssues);
 
     // Validate server component patterns
-    const serverComponentIssues = validateServerComponents(componentContext, filePath);
+    const serverComponentIssues = validateServerComponents(
+      componentContext,
+      filePath,
+    );
     issues.push(...serverComponentIssues);
 
     // Validate component exports
@@ -66,25 +77,31 @@ export async function validateReact19Implementation(
     // Validate prop destructuring
     const propIssues = validatePropDestructuring(componentContext, filePath);
     issues.push(...propIssues);
-    
+
     // Validate string refs
     const stringRefIssues = validateStringRefs(sourceFile, filePath);
     issues.push(...stringRefIssues);
-    
+
     // Validate findDOMNode usage
     const findDOMNodeIssues = validateFindDOMNode(sourceFile, filePath);
     issues.push(...findDOMNodeIssues);
-    
+
     // Validate use hooks conditional usage
-    const conditionalHookIssues = validateHookConditionalUsage(sourceFile, filePath);
+    const conditionalHookIssues = validateHookConditionalUsage(
+      sourceFile,
+      filePath,
+    );
     issues.push(...conditionalHookIssues);
-    
+
     // Validate head elements in JSX
     const headElementIssues = validateHeadElementsInJSX(sourceFile, filePath);
     issues.push(...headElementIssues);
-    
+
     // Validate suspense boundaries
-    const suspenseBoundaryIssues = validateSuspenseBoundaries(sourceFile, filePath);
+    const suspenseBoundaryIssues = validateSuspenseBoundaries(
+      sourceFile,
+      filePath,
+    );
     issues.push(...suspenseBoundaryIssues);
   }
 
@@ -108,9 +125,12 @@ export async function validateReact19Implementation(
     issues.push(...hookReturnIssues);
 
     // Validate hook implementation
-    const hookImplementationIssues = validateHookImplementation(hookContext, filePath);
+    const hookImplementationIssues = validateHookImplementation(
+      hookContext,
+      filePath,
+    );
     issues.push(...hookImplementationIssues);
-    
+
     // Validate useFormState
     const useFormStateIssues = validateUseFormState(sourceFile, filePath);
     issues.push(...useFormStateIssues);
@@ -125,11 +145,14 @@ export async function validateReact19Implementation(
 /**
  * Extracts component context from a source file using ts-morph
  */
-function extractComponentContext(sourceFile: SourceFile, filePath: string): any {
+function extractComponentContext(
+  sourceFile: SourceFile,
+  filePath: string,
+): any {
   const context: any = {
     filePath,
     isComponent: false,
-    componentName: '',
+    componentName: "",
     isFunctionalComponent: false,
     isServerComponent: !sourceFile.getFullText().includes('"use client"'),
     hasUseClientDirective: sourceFile.getFullText().includes('"use client"'),
@@ -155,48 +178,57 @@ function extractComponentContext(sourceFile: SourceFile, filePath: string): any 
   if (componentDeclarations.length > 0) {
     context.isComponent = true;
     context.isFunctionalComponent = true;
-    
+
     // Get first component's name
     const firstComponent = componentDeclarations[0];
     context.componentName = firstComponent.name;
     context.componentDeclarationLine = firstComponent.line;
-    
+
     // Check if uses React.FC
     context.usesReactFC = firstComponent.usesReactFC;
   }
 
   // Check for imports
   const importDeclarations = sourceFile.getImportDeclarations();
-  
+
   // Check for React imports and hooks
   for (const importDecl of importDeclarations) {
-    if (importDecl.getModuleSpecifierValue() === 'react') {
+    if (importDecl.getModuleSpecifierValue() === "react") {
       const namedImports = importDecl.getNamedImports();
-      
-      context.usesState = namedImports.some(imp => imp.getName() === 'useState');
-      context.usesEffect = namedImports.some(imp => imp.getName() === 'useEffect');
-      context.usesRef = namedImports.some(imp => imp.getName() === 'useRef');
-      context.usesTransition = namedImports.some(imp => imp.getName() === 'useTransition');
-      context.usesUseHook = namedImports.some(imp => imp.getName() === 'use');
+
+      context.usesState = namedImports.some(
+        (imp) => imp.getName() === "useState",
+      );
+      context.usesEffect = namedImports.some(
+        (imp) => imp.getName() === "useEffect",
+      );
+      context.usesRef = namedImports.some((imp) => imp.getName() === "useRef");
+      context.usesTransition = namedImports.some(
+        (imp) => imp.getName() === "useTransition",
+      );
+      context.usesUseHook = namedImports.some((imp) => imp.getName() === "use");
     }
   }
 
   // Check for useEffect hooks
-  const callExpressions = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression);
+  const callExpressions = sourceFile.getDescendantsOfKind(
+    SyntaxKind.CallExpression,
+  );
   for (const call of callExpressions) {
     const expression = call.getExpression();
-    
+
     // Check for useEffect
-    if (Node.isIdentifier(expression) && expression.getText() === 'useEffect') {
+    if (Node.isIdentifier(expression) && expression.getText() === "useEffect") {
       const args = call.getArguments();
-      if (args.length >= 2) { // Has dependency array
+      if (args.length >= 2) {
+        // Has dependency array
         const callback = args[0];
         const depsArray = args[1];
-        
+
         if (Node.isArrayLiteralExpression(depsArray)) {
-          const deps = depsArray.getElements().map(el => el.getText());
+          const deps = depsArray.getElements().map((el) => el.getText());
           const missingDependencies: string[] = []; // Would need more analysis to determine missing dependencies
-          
+
           context.effectHooks.push({
             line: call.getStartLineNumber(),
             dependencyArrayText: depsArray.getText(),
@@ -205,31 +237,34 @@ function extractComponentContext(sourceFile: SourceFile, filePath: string): any 
         }
       }
     }
-    
+
     // Check for useState with type parameters
-    if (Node.isIdentifier(expression) && expression.getText() === 'useState') {
+    if (Node.isIdentifier(expression) && expression.getText() === "useState") {
       const typeArgs = call.getTypeArguments();
       context.hasStateTypeParameters = typeArgs.length > 0;
       context.stateHookLine = call.getStartLineNumber();
     }
-    
+
     // Check for data fetching
-    if (Node.isIdentifier(expression) && expression.getText() === 'fetch') {
+    if (Node.isIdentifier(expression) && expression.getText() === "fetch") {
       context.hasAsyncOperations = true;
       context.asyncOperationLine = call.getStartLineNumber();
     }
-    
+
     // Check for axios
     if (Node.isPropertyAccessExpression(expression)) {
       const object = expression.getExpression();
-      if (Node.isIdentifier(object) && object.getText() === 'axios') {
+      if (Node.isIdentifier(object) && object.getText() === "axios") {
         context.hasAsyncOperations = true;
         context.asyncOperationLine = call.getStartLineNumber();
       }
     }
-    
+
     // Check for promise .then
-    if (Node.isPropertyAccessExpression(expression) && expression.getName() === 'then') {
+    if (
+      Node.isPropertyAccessExpression(expression) &&
+      expression.getName() === "then"
+    ) {
       context.usesPromiseThen = true;
       context.promiseThenLine = call.getStartLineNumber();
     }
@@ -238,48 +273,86 @@ function extractComponentContext(sourceFile: SourceFile, filePath: string): any 
   // Check for exports
   const exportAssignments = sourceFile.getExportAssignments();
   const exportDeclarations = sourceFile.getExportDeclarations();
-  const variableStatements = sourceFile.getVariableStatements().filter(s => 
-    s.getFirstModifierByKind(SyntaxKind.ExportKeyword));
-  const functionDeclarations = sourceFile.getFunctions().filter(f => 
-    f.getFirstModifierByKind(SyntaxKind.ExportKeyword));
-  
-  context.hasDefaultExport = exportAssignments.some(exp => exp.isExportEquals() === false);
-  context.hasNamedExport = exportDeclarations.length > 0 || variableStatements.length > 0 || functionDeclarations.length > 0;
-  context.exportLine = exportAssignments[0]?.getStartLineNumber() || 
-                     exportDeclarations[0]?.getStartLineNumber() || 
-                     variableStatements[0]?.getStartLineNumber() || 
-                     functionDeclarations[0]?.getStartLineNumber() || 0;
+  const variableStatements = sourceFile
+    .getVariableStatements()
+    .filter((s) => s.getFirstModifierByKind(SyntaxKind.ExportKeyword));
+  const functionDeclarations = sourceFile
+    .getFunctions()
+    .filter((f) => f.getFirstModifierByKind(SyntaxKind.ExportKeyword));
+
+  context.hasDefaultExport = exportAssignments.some(
+    (exp) => exp.isExportEquals() === false,
+  );
+  context.hasNamedExport =
+    exportDeclarations.length > 0 ||
+    variableStatements.length > 0 ||
+    functionDeclarations.length > 0;
+  context.exportLine =
+    exportAssignments[0]?.getStartLineNumber() ||
+    exportDeclarations[0]?.getStartLineNumber() ||
+    variableStatements[0]?.getStartLineNumber() ||
+    functionDeclarations[0]?.getStartLineNumber() ||
+    0;
 
   // Check for loading state
   const variables = sourceFile.getVariableDeclarations();
-  context.hasLoadingState = variables.some(v => {
+  context.hasLoadingState = variables.some((v) => {
     const name = v.getName();
-    return name.includes('loading') || name.includes('isLoading');
+    return name.includes("loading") || name.includes("isLoading");
   });
-  context.loadingStateLine = variables.find(v => {
-    const name = v.getName();
-    return name.includes('loading') || name.includes('isLoading');
-  })?.getStartLineNumber() || 0;
+  context.loadingStateLine =
+    variables
+      .find((v) => {
+        const name = v.getName();
+        return name.includes("loading") || name.includes("isLoading");
+      })
+      ?.getStartLineNumber() || 0;
 
   // Check for props without destructuring
-  context.usesPropsWithoutDestructuring = sourceFile.getFullText().includes('props.');
-  context.propsUsageLine = sourceFile.getFullText().indexOf('props.') !== -1 ? 
-    sourceFile.getFullText().substring(0, sourceFile.getFullText().indexOf('props.')).split('\n').length : 0;
+  context.usesPropsWithoutDestructuring = sourceFile
+    .getFullText()
+    .includes("props.");
+  context.propsUsageLine =
+    sourceFile.getFullText().indexOf("props.") !== -1
+      ? sourceFile
+          .getFullText()
+          .substring(0, sourceFile.getFullText().indexOf("props."))
+          .split("\n").length
+      : 0;
 
   // Check for client hooks in what appears to be a server component
-  if (context.isServerComponent && (context.usesState || context.usesEffect || context.usesRef)) {
-    context.clientHookLine = sourceFile.getFullText().indexOf('useState') !== -1 ?
-      sourceFile.getFullText().substring(0, sourceFile.getFullText().indexOf('useState')).split('\n').length :
-      sourceFile.getFullText().indexOf('useEffect') !== -1 ?
-      sourceFile.getFullText().substring(0, sourceFile.getFullText().indexOf('useEffect')).split('\n').length :
-      sourceFile.getFullText().indexOf('useRef') !== -1 ?
-      sourceFile.getFullText().substring(0, sourceFile.getFullText().indexOf('useRef')).split('\n').length : 0;
+  if (
+    context.isServerComponent &&
+    (context.usesState || context.usesEffect || context.usesRef)
+  ) {
+    context.clientHookLine =
+      sourceFile.getFullText().indexOf("useState") !== -1
+        ? sourceFile
+            .getFullText()
+            .substring(0, sourceFile.getFullText().indexOf("useState"))
+            .split("\n").length
+        : sourceFile.getFullText().indexOf("useEffect") !== -1
+          ? sourceFile
+              .getFullText()
+              .substring(0, sourceFile.getFullText().indexOf("useEffect"))
+              .split("\n").length
+          : sourceFile.getFullText().indexOf("useRef") !== -1
+            ? sourceFile
+                .getFullText()
+                .substring(0, sourceFile.getFullText().indexOf("useRef"))
+                .split("\n").length
+            : 0;
   }
-  
+
   // If we have a "use client" directive, find its line number
   if (context.hasUseClientDirective) {
-    context.useClientDirectiveLine = sourceFile.getFullText().indexOf('"use client"') !== -1 ?
-      sourceFile.getFullText().substring(0, sourceFile.getFullText().indexOf('"use client"')).split('\n').length : 0;
+    context.useClientDirectiveLine =
+      sourceFile.getFullText().indexOf('"use client"') !== -1
+        ? sourceFile
+            .getFullText()
+            .substring(0, sourceFile.getFullText().indexOf('"use client"'))
+            .split("\n").length
+        : 0;
   }
 
   return context;
@@ -288,33 +361,40 @@ function extractComponentContext(sourceFile: SourceFile, filePath: string): any 
 /**
  * Find component declarations in a source file
  */
-function findComponentDeclarations(sourceFile: SourceFile): Array<{name: string, line: number, usesReactFC: boolean}> {
-  const components: Array<{name: string, line: number, usesReactFC: boolean}> = [];
-  
+function findComponentDeclarations(
+  sourceFile: SourceFile,
+): Array<{ name: string; line: number; usesReactFC: boolean }> {
+  const components: Array<{
+    name: string;
+    line: number;
+    usesReactFC: boolean;
+  }> = [];
+
   // Check for function components
   const functions = sourceFile.getFunctions();
   for (const func of functions) {
     // Check if it returns JSX
     const hasJsxReturn = doesFunctionReturnJsx(func);
     if (hasJsxReturn) {
-      const name = func.getName() || '';
+      const name = func.getName() || "";
       if (name) {
-        const usesReactFC = func.getType().getText().includes('React.FC') || 
-                           func.getType().getText().includes('React.FunctionComponent');
+        const usesReactFC =
+          func.getType().getText().includes("React.FC") ||
+          func.getType().getText().includes("React.FunctionComponent");
         components.push({
           name,
           line: func.getStartLineNumber(),
-          usesReactFC
+          usesReactFC,
         });
       }
     }
   }
-  
+
   // Check for variable declarations that are arrow functions
   const variables = sourceFile.getVariableDeclarations();
   for (const variable of variables) {
     const initializer = variable.getInitializer();
-    
+
     // Check if it's an arrow function
     if (Node.isArrowFunction(initializer)) {
       // Check if it returns JSX
@@ -323,17 +403,18 @@ function findComponentDeclarations(sourceFile: SourceFile): Array<{name: string,
         const name = variable.getName();
         // Check if it has React.FC type
         const type = variable.getType().getText();
-        const usesReactFC = type.includes('React.FC') || type.includes('React.FunctionComponent');
-        
+        const usesReactFC =
+          type.includes("React.FC") || type.includes("React.FunctionComponent");
+
         components.push({
           name,
           line: variable.getStartLineNumber(),
-          usesReactFC
+          usesReactFC,
         });
       }
     }
   }
-  
+
   return components;
 }
 
@@ -342,17 +423,19 @@ function findComponentDeclarations(sourceFile: SourceFile): Array<{name: string,
  */
 function doesFunctionReturnJsx(func: any): boolean {
   // Look for return statements with JSX
-  const returnStatements = func.getDescendantsOfKind(SyntaxKind.ReturnStatement);
+  const returnStatements = func.getDescendantsOfKind(
+    SyntaxKind.ReturnStatement,
+  );
   for (const returnStmt of returnStatements) {
     const expression = returnStmt.getExpression();
     if (!expression) continue;
-    
+
     // Check if return expression is JSX
     if (hasJsxInNode(expression)) {
       return true;
     }
   }
-  
+
   return false;
 }
 
@@ -362,23 +445,25 @@ function doesFunctionReturnJsx(func: any): boolean {
 function doesArrowFunctionReturnJsx(arrowFunc: any): boolean {
   // For expression body arrow functions
   const body = arrowFunc.getBody();
-  
+
   // If the body is an expression (not a block), check if it's JSX
   if (!Node.isBlock(body)) {
     return hasJsxInNode(body);
   }
-  
+
   // For block body, check the return statements
-  const returnStatements = body.getDescendantsOfKind(SyntaxKind.ReturnStatement);
+  const returnStatements = body.getDescendantsOfKind(
+    SyntaxKind.ReturnStatement,
+  );
   for (const returnStmt of returnStatements) {
     const expression = returnStmt.getExpression();
     if (!expression) continue;
-    
+
     if (hasJsxInNode(expression)) {
       return true;
     }
   }
-  
+
   return false;
 }
 
@@ -387,17 +472,23 @@ function doesArrowFunctionReturnJsx(arrowFunc: any): boolean {
  */
 function hasJsxInNode(node: any): boolean {
   // Check if the node itself is a JSX element or fragment
-  if (Node.isJsxElement(node) || Node.isJsxFragment(node) || 
-      Node.isJsxSelfClosingElement(node)) {
+  if (
+    Node.isJsxElement(node) ||
+    Node.isJsxFragment(node) ||
+    Node.isJsxSelfClosingElement(node)
+  ) {
     return true;
   }
-  
+
   // Check children if the node doesn't need to be checked itself
-  return node.getDescendants().some((desc: Node) => 
-    Node.isJsxElement(desc) || 
-    Node.isJsxFragment(desc) || 
-    Node.isJsxSelfClosingElement(desc)
-  );
+  return node
+    .getDescendants()
+    .some(
+      (desc: Node) =>
+        Node.isJsxElement(desc) ||
+        Node.isJsxFragment(desc) ||
+        Node.isJsxSelfClosingElement(desc),
+    );
 }
 
 /**
@@ -407,7 +498,7 @@ function extractHookContext(sourceFile: SourceFile, filePath: string): any {
   const context: any = {
     filePath,
     isHook: false,
-    name: '',
+    name: "",
     hasReturnValue: false,
     hasConditionalHookCall: false,
   };
@@ -416,56 +507,83 @@ function extractHookContext(sourceFile: SourceFile, filePath: string): any {
   const functions = sourceFile.getFunctions();
   for (const func of functions) {
     const name = func.getName();
-    if (name && name.startsWith('use')) {
+    if (name && name.startsWith("use")) {
       context.isHook = true;
       context.name = name;
       context.nameDeclarationLine = func.getStartLineNumber();
       context.functionBodyLine = func.getBody()?.getStartLineNumber() || 0;
-      
+
       // Check for return statements
-      const returnStatements = func.getDescendantsOfKind(SyntaxKind.ReturnStatement);
+      const returnStatements = func.getDescendantsOfKind(
+        SyntaxKind.ReturnStatement,
+      );
       context.hasReturnValue = returnStatements.length > 0;
-      
+
       // Check for conditional hook calls
       // Look for hook calls inside if statements or ternary expressions
       const ifStatements = func.getDescendantsOfKind(SyntaxKind.IfStatement);
-      const conditionalExpressions = func.getDescendantsOfKind(SyntaxKind.ConditionalExpression);
-      
-      const hookCallInIfStatement = ifStatements.some(ifStmt => {
-        return ifStmt.getDescendantsOfKind(SyntaxKind.CallExpression).some(call => {
-          const expression = call.getExpression();
-          return Node.isIdentifier(expression) && expression.getText().startsWith('use');
-        });
+      const conditionalExpressions = func.getDescendantsOfKind(
+        SyntaxKind.ConditionalExpression,
+      );
+
+      const hookCallInIfStatement = ifStatements.some((ifStmt) => {
+        return ifStmt
+          .getDescendantsOfKind(SyntaxKind.CallExpression)
+          .some((call) => {
+            const expression = call.getExpression();
+            return (
+              Node.isIdentifier(expression) &&
+              expression.getText().startsWith("use")
+            );
+          });
       });
-      
-      const hookCallInTernary = conditionalExpressions.some(condExpr => {
-        return condExpr.getDescendantsOfKind(SyntaxKind.CallExpression).some(call => {
-          const expression = call.getExpression();
-          return Node.isIdentifier(expression) && expression.getText().startsWith('use');
-        });
+
+      const hookCallInTernary = conditionalExpressions.some((condExpr) => {
+        return condExpr
+          .getDescendantsOfKind(SyntaxKind.CallExpression)
+          .some((call) => {
+            const expression = call.getExpression();
+            return (
+              Node.isIdentifier(expression) &&
+              expression.getText().startsWith("use")
+            );
+          });
       });
-      
-      context.hasConditionalHookCall = hookCallInIfStatement || hookCallInTernary;
-      
+
+      context.hasConditionalHookCall =
+        hookCallInIfStatement || hookCallInTernary;
+
       if (context.hasConditionalHookCall) {
-        const firstIfWithHook = ifStatements.find(ifStmt => {
-          return ifStmt.getDescendantsOfKind(SyntaxKind.CallExpression).some(call => {
-            const expression = call.getExpression();
-            return Node.isIdentifier(expression) && expression.getText().startsWith('use');
-          });
+        const firstIfWithHook = ifStatements.find((ifStmt) => {
+          return ifStmt
+            .getDescendantsOfKind(SyntaxKind.CallExpression)
+            .some((call) => {
+              const expression = call.getExpression();
+              return (
+                Node.isIdentifier(expression) &&
+                expression.getText().startsWith("use")
+              );
+            });
         });
-        
-        const firstTernaryWithHook = conditionalExpressions.find(condExpr => {
-          return condExpr.getDescendantsOfKind(SyntaxKind.CallExpression).some(call => {
-            const expression = call.getExpression();
-            return Node.isIdentifier(expression) && expression.getText().startsWith('use');
-          });
+
+        const firstTernaryWithHook = conditionalExpressions.find((condExpr) => {
+          return condExpr
+            .getDescendantsOfKind(SyntaxKind.CallExpression)
+            .some((call) => {
+              const expression = call.getExpression();
+              return (
+                Node.isIdentifier(expression) &&
+                expression.getText().startsWith("use")
+              );
+            });
         });
-        
-        context.conditionalHookLine = firstIfWithHook?.getStartLineNumber() || 
-                                     firstTernaryWithHook?.getStartLineNumber() || 0;
+
+        context.conditionalHookLine =
+          firstIfWithHook?.getStartLineNumber() ||
+          firstTernaryWithHook?.getStartLineNumber() ||
+          0;
       }
-      
+
       break; // Only analyze the first hook function
     }
   }
@@ -476,42 +594,48 @@ function extractHookContext(sourceFile: SourceFile, filePath: string): any {
 /**
  * Validates "use client" directive in components
  */
-function validateUseDirective(component: any, filePath: string): ValidationIssue[] {
+function validateUseDirective(
+  component: any,
+  filePath: string,
+): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   // Check for server components with "use client" directive
   if (component.isServerComponent && component.hasUseClientDirective) {
     issues.push({
-      type: 'error',
+      type: "error",
       message: 'Server component should not have "use client" directive',
       filePath,
       line: component.useClientDirectiveLine,
-      code: 'REACT19_SERVER_COMPONENT_WITH_USE_CLIENT',
-      framework: 'react',
+      code: "REACT19_SERVER_COMPONENT_WITH_USE_CLIENT",
+      framework: "react",
       fix: {
-        type: 'remove_line',
+        type: "remove_line",
         line: component.useClientDirectiveLine,
       },
-      documentation: 'https://react.dev/reference/directives',
+      documentation: "https://react.dev/reference/directives",
     });
   }
 
   // Check for client-side features without "use client" directive
-  if (!component.isServerComponent && !component.hasUseClientDirective &&
-      (component.usesState || component.usesEffect || component.usesRef)) {
+  if (
+    !component.isServerComponent &&
+    !component.hasUseClientDirective &&
+    (component.usesState || component.usesEffect || component.usesRef)
+  ) {
     issues.push({
-      type: 'error',
+      type: "error",
       message: 'Client component with hooks must have "use client" directive',
       filePath,
       line: 1,
-      code: 'REACT19_MISSING_USE_CLIENT',
-      framework: 'react',
+      code: "REACT19_MISSING_USE_CLIENT",
+      framework: "react",
       fix: {
-        type: 'insert_line',
+        type: "insert_line",
         line: 1,
         content: '"use client";',
       },
-      documentation: 'https://react.dev/reference/directives',
+      documentation: "https://react.dev/reference/directives",
     });
   }
 
@@ -527,73 +651,79 @@ function validateHooks(component: any, filePath: string): ValidationIssue[] {
   // Validate useState with TypeScript generics
   if (component.usesState && !component.hasStateTypeParameters) {
     issues.push({
-      type: 'warning',
-      message: 'useState should use explicit TypeScript generic parameters',
+      type: "warning",
+      message: "useState should use explicit TypeScript generic parameters",
       filePath,
       line: component.stateHookLine,
-      code: 'REACT19_UNTYPED_STATE',
-      framework: 'react',
+      code: "REACT19_UNTYPED_STATE",
+      framework: "react",
       fix: {
-        type: 'replace',
-        pattern: 'useState(',
-        replacement: 'useState<{type}>(',
-        context: 'needs-manual-type-definition'
+        type: "replace",
+        pattern: "useState(",
+        replacement: "useState<{type}>(",
+        context: "needs-manual-type-definition",
       },
-      documentation: 'https://react.dev/reference/react/useState',
+      documentation: "https://react.dev/reference/react/useState",
     });
   }
 
   // Check for new React 19 'use' hook pattern for promises
   if (component.hasAsyncOperations && !component.usesUseHook) {
     issues.push({
-      type: 'suggestion',
+      type: "suggestion",
       message: 'Consider using the "use" hook for Promise handling',
       filePath,
       line: component.asyncOperationLine,
-      code: 'REACT19_MISSING_USE_HOOK',
-      framework: 'react',
+      code: "REACT19_MISSING_USE_HOOK",
+      framework: "react",
       fix: {
-        type: 'complex',
-        transformer: 'transformToUseHook',
+        type: "complex",
+        transformer: "transformToUseHook",
       },
-      documentation: 'https://react.dev/reference/react/use',
+      documentation: "https://react.dev/reference/react/use",
     });
   }
 
   // Validate useEffect dependencies
-  component.effectHooks.forEach((hook: { line: number; dependencyArrayText: string; missingDependencies: string[] }) => {
-    if (hook.missingDependencies.length > 0) {
-      issues.push({
-        type: 'error',
-        message: `useEffect is missing dependencies: ${hook.missingDependencies.join(', ')}`,
-        filePath,
-        line: hook.line,
-        code: 'REACT19_INCOMPLETE_EFFECT_DEPS',
-        framework: 'react',
-        fix: {
-          type: 'replace',
-          pattern: hook.dependencyArrayText,
-          replacement: `[${hook.missingDependencies.join(', ')}, ${hook.dependencyArrayText.slice(1, -1)}]`
-        },
-        documentation: 'https://react.dev/reference/react/useEffect',
-      });
-    }
-  });
+  component.effectHooks.forEach(
+    (hook: {
+      line: number;
+      dependencyArrayText: string;
+      missingDependencies: string[];
+    }) => {
+      if (hook.missingDependencies.length > 0) {
+        issues.push({
+          type: "error",
+          message: `useEffect is missing dependencies: ${hook.missingDependencies.join(", ")}`,
+          filePath,
+          line: hook.line,
+          code: "REACT19_INCOMPLETE_EFFECT_DEPS",
+          framework: "react",
+          fix: {
+            type: "replace",
+            pattern: hook.dependencyArrayText,
+            replacement: `[${hook.missingDependencies.join(", ")}, ${hook.dependencyArrayText.slice(1, -1)}]`,
+          },
+          documentation: "https://react.dev/reference/react/useEffect",
+        });
+      }
+    },
+  );
 
   // Check for outdated context usage (useContext instead of createContext().Provider)
   if (component.usesLegacyContext) {
     issues.push({
-      type: 'error',
-      message: 'Using legacy context API instead of React.createContext',
+      type: "error",
+      message: "Using legacy context API instead of React.createContext",
       filePath,
       line: component.legacyContextLine,
-      code: 'REACT19_LEGACY_CONTEXT',
-      framework: 'react',
+      code: "REACT19_LEGACY_CONTEXT",
+      framework: "react",
       fix: {
-        type: 'complex',
-        transformer: 'transformToModernContext',
+        type: "complex",
+        transformer: "transformToModernContext",
       },
-      documentation: 'https://react.dev/reference/react/createContext',
+      documentation: "https://react.dev/reference/react/createContext",
     });
   }
 
@@ -603,7 +733,10 @@ function validateHooks(component: any, filePath: string): ValidationIssue[] {
 /**
  * Validates server component patterns
  */
-function validateServerComponents(component: any, filePath: string): ValidationIssue[] {
+function validateServerComponents(
+  component: any,
+  filePath: string,
+): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   // Check for proper server component patterns
@@ -611,38 +744,42 @@ function validateServerComponents(component: any, filePath: string): ValidationI
     // Server components shouldn't use client-side hooks
     if (component.usesState || component.usesEffect || component.usesRef) {
       issues.push({
-        type: 'error',
-        message: 'Server component should not use client-side hooks (useState, useEffect, useRef)',
+        type: "error",
+        message:
+          "Server component should not use client-side hooks (useState, useEffect, useRef)",
         filePath,
         line: component.clientHookLine,
-        code: 'REACT19_SERVER_COMPONENT_WITH_CLIENT_HOOKS',
-        framework: 'react',
+        code: "REACT19_SERVER_COMPONENT_WITH_CLIENT_HOOKS",
+        framework: "react",
         fix: {
-          type: 'manual',
-          description: 'Convert to client component or extract client-side logic',
+          type: "manual",
+          description:
+            "Convert to client component or extract client-side logic",
           steps: [
             'Add "use client" directive at the top of the file',
-            'Or extract client-side logic to a separate client component'
-          ]
+            "Or extract client-side logic to a separate client component",
+          ],
         },
-        documentation: 'https://react.dev/reference/react/directives',
+        documentation: "https://react.dev/reference/react/directives",
       });
     }
 
     // Server components should use async/await for data fetching
     if (component.usesPromiseThen) {
       issues.push({
-        type: 'warning',
-        message: 'Server component should use async/await instead of .then() for cleaner code',
+        type: "warning",
+        message:
+          "Server component should use async/await instead of .then() for cleaner code",
         filePath,
         line: component.promiseThenLine,
-        code: 'REACT19_SERVER_COMPONENT_PROMISE_THEN',
-        framework: 'react',
+        code: "REACT19_SERVER_COMPONENT_PROMISE_THEN",
+        framework: "react",
         fix: {
-          type: 'complex',
-          transformer: 'transformPromiseToAsyncAwait',
+          type: "complex",
+          transformer: "transformPromiseToAsyncAwait",
         },
-        documentation: 'https://react.dev/reference/react-dom/server-components',
+        documentation:
+          "https://react.dev/reference/react-dom/server-components",
       });
     }
   }
@@ -653,42 +790,47 @@ function validateServerComponents(component: any, filePath: string): ValidationI
 /**
  * Validates component exports
  */
-function validateComponentExports(component: any, filePath: string): ValidationIssue[] {
+function validateComponentExports(
+  component: any,
+  filePath: string,
+): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   // Check for default exports (we prefer named exports)
   if (component.hasDefaultExport && !component.hasNamedExport) {
     issues.push({
-      type: 'warning',
-      message: 'Prefer named exports over default exports for components',
+      type: "warning",
+      message: "Prefer named exports over default exports for components",
       filePath,
       line: component.exportLine,
-      code: 'REACT19_DEFAULT_EXPORT',
-      framework: 'react',
+      code: "REACT19_DEFAULT_EXPORT",
+      framework: "react",
       fix: {
-        type: 'complex',
-        transformer: 'transformToNamedExport',
+        type: "complex",
+        transformer: "transformToNamedExport",
       },
-      documentation: 'https://basarat.gitbook.io/typescript/main-1/defaultisbad',
+      documentation:
+        "https://basarat.gitbook.io/typescript/main-1/defaultisbad",
     });
   }
 
   // Check for correct naming conventions
   if (component.componentName && !isPascalCase(component.componentName)) {
     issues.push({
-      type: 'error',
+      type: "error",
       message: `Component name "${component.componentName}" should be PascalCase`,
       filePath,
       line: component.componentDeclarationLine,
-      code: 'REACT19_COMPONENT_NAMING',
-      framework: 'react',
+      code: "REACT19_COMPONENT_NAMING",
+      framework: "react",
       fix: {
-        type: 'replace',
+        type: "replace",
         pattern: `${component.componentName}`,
         replacement: toPascalCase(component.componentName),
-        context: 'component-declaration'
+        context: "component-declaration",
       },
-      documentation: 'https://reactjs.org/docs/jsx-in-depth.html#user-defined-components-must-be-capitalized',
+      documentation:
+        "https://reactjs.org/docs/jsx-in-depth.html#user-defined-components-must-be-capitalized",
     });
   }
 
@@ -698,23 +840,26 @@ function validateComponentExports(component: any, filePath: string): ValidationI
 /**
  * Validates transition API usage
  */
-function validateTransitions(component: any, filePath: string): ValidationIssue[] {
+function validateTransitions(
+  component: any,
+  filePath: string,
+): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   // Check for manual loading state management without useTransition
   if (component.hasLoadingState && !component.usesTransition) {
     issues.push({
-      type: 'suggestion',
-      message: 'Consider using useTransition hook for loading state management',
+      type: "suggestion",
+      message: "Consider using useTransition hook for loading state management",
       filePath,
       line: component.loadingStateLine,
-      code: 'REACT19_MISSING_TRANSITION',
-      framework: 'react',
+      code: "REACT19_MISSING_TRANSITION",
+      framework: "react",
       fix: {
-        type: 'complex',
-        transformer: 'transformToUseTransition',
+        type: "complex",
+        transformer: "transformToUseTransition",
       },
-      documentation: 'https://react.dev/reference/react/useTransition',
+      documentation: "https://react.dev/reference/react/useTransition",
     });
   }
 
@@ -730,17 +875,18 @@ function validateReactFC(component: any, filePath: string): ValidationIssue[] {
   // Check for functional components without React.FC
   if (component.isFunctionalComponent && !component.usesReactFC) {
     issues.push({
-      type: 'warning',
-      message: 'Functional component should use React.FC type',
+      type: "warning",
+      message: "Functional component should use React.FC type",
       filePath,
       line: component.componentDeclarationLine,
-      code: 'REACT19_MISSING_FC_TYPE',
-      framework: 'react',
+      code: "REACT19_MISSING_FC_TYPE",
+      framework: "react",
       fix: {
-        type: 'complex',
-        transformer: 'addReactFCType',
+        type: "complex",
+        transformer: "addReactFCType",
       },
-      documentation: 'https://react-typescript-cheatsheet.netlify.app/docs/basic/getting-started/function_components/',
+      documentation:
+        "https://react-typescript-cheatsheet.netlify.app/docs/basic/getting-started/function_components/",
     });
   }
 
@@ -750,23 +896,26 @@ function validateReactFC(component: any, filePath: string): ValidationIssue[] {
 /**
  * Validates prop destructuring
  */
-function validatePropDestructuring(component: any, filePath: string): ValidationIssue[] {
+function validatePropDestructuring(
+  component: any,
+  filePath: string,
+): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   // Check for props without destructuring
   if (component.usesPropsWithoutDestructuring) {
     issues.push({
-      type: 'suggestion',
-      message: 'Consider destructuring props for cleaner code',
+      type: "suggestion",
+      message: "Consider destructuring props for cleaner code",
       filePath,
       line: component.propsUsageLine,
-      code: 'REACT19_USE_PROPS_DESTRUCTURING',
-      framework: 'react',
+      code: "REACT19_USE_PROPS_DESTRUCTURING",
+      framework: "react",
       fix: {
-        type: 'complex',
-        transformer: 'transformToDestructuredProps',
+        type: "complex",
+        transformer: "transformToDestructuredProps",
       },
-      documentation: 'https://reactjs.org/docs/components-and-props.html',
+      documentation: "https://reactjs.org/docs/components-and-props.html",
     });
   }
 
@@ -780,21 +929,21 @@ function validateHookNaming(hook: any, filePath: string): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   // Hook names should start with 'use'
-  if (hook.isHook && !hook.name.startsWith('use')) {
+  if (hook.isHook && !hook.name.startsWith("use")) {
     issues.push({
-      type: 'error',
+      type: "error",
       message: `Hook name "${hook.name}" must start with 'use'`,
       filePath,
       line: hook.nameDeclarationLine,
-      code: 'REACT19_INVALID_HOOK_NAME',
-      framework: 'react',
+      code: "REACT19_INVALID_HOOK_NAME",
+      framework: "react",
       fix: {
-        type: 'replace',
+        type: "replace",
         pattern: `${hook.name}`,
         replacement: `use${hook.name.charAt(0).toUpperCase()}${hook.name.slice(1)}`,
-        context: 'hook-declaration'
+        context: "hook-declaration",
       },
-      documentation: 'https://reactjs.org/docs/hooks-rules.html',
+      documentation: "https://reactjs.org/docs/hooks-rules.html",
     });
   }
 
@@ -810,17 +959,17 @@ function validateHookReturn(hook: any, filePath: string): ValidationIssue[] {
   // Hook should have a return value
   if (hook.isHook && !hook.hasReturnValue) {
     issues.push({
-      type: 'error',
-      message: 'Hook must return a value',
+      type: "error",
+      message: "Hook must return a value",
       filePath,
       line: hook.functionBodyLine,
-      code: 'REACT19_HOOK_NO_RETURN',
-      framework: 'react',
+      code: "REACT19_HOOK_NO_RETURN",
+      framework: "react",
       fix: {
-        type: 'manual',
-        description: 'Add a return value to the hook',
+        type: "manual",
+        description: "Add a return value to the hook",
       },
-      documentation: 'https://reactjs.org/docs/hooks-rules.html',
+      documentation: "https://reactjs.org/docs/hooks-rules.html",
     });
   }
 
@@ -830,27 +979,30 @@ function validateHookReturn(hook: any, filePath: string): ValidationIssue[] {
 /**
  * Validates hook implementation
  */
-function validateHookImplementation(hook: any, filePath: string): ValidationIssue[] {
+function validateHookImplementation(
+  hook: any,
+  filePath: string,
+): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   // Hook should not call other hooks conditionally
   if (hook.hasConditionalHookCall) {
     issues.push({
-      type: 'error',
-      message: 'Hooks cannot be called conditionally',
+      type: "error",
+      message: "Hooks cannot be called conditionally",
       filePath,
       line: hook.conditionalHookLine,
-      code: 'REACT19_CONDITIONAL_HOOK',
-      framework: 'react',
+      code: "REACT19_CONDITIONAL_HOOK",
+      framework: "react",
       fix: {
-        type: 'manual',
-        description: 'Move hook call outside of conditional',
+        type: "manual",
+        description: "Move hook call outside of conditional",
         steps: [
-          'Extract hook call to the top level of the hook function',
-          'Use the result conditionally instead of conditionally calling the hook'
-        ]
+          "Extract hook call to the top level of the hook function",
+          "Use the result conditionally instead of conditionally calling the hook",
+        ],
       },
-      documentation: 'https://reactjs.org/docs/hooks-rules.html',
+      documentation: "https://reactjs.org/docs/hooks-rules.html",
     });
   }
 
@@ -860,402 +1012,463 @@ function validateHookImplementation(hook: any, filePath: string): ValidationIssu
 /**
  * Validates string refs
  */
-function validateStringRefs(sourceFile: SourceFile, filePath: string): ValidationIssue[] {
+function validateStringRefs(
+  sourceFile: SourceFile,
+  filePath: string,
+): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
-  
+
   // Find JSX elements with string refs
   const jsxElements = sourceFile.getDescendantsOfKind(SyntaxKind.JsxElement);
-  const jsxSelfClosingElements = sourceFile.getDescendantsOfKind(SyntaxKind.JsxSelfClosingElement);
-  
+  const jsxSelfClosingElements = sourceFile.getDescendantsOfKind(
+    SyntaxKind.JsxSelfClosingElement,
+  );
+
   // Helper function to check attributes
   const checkAttributes = (attributes: any[]) => {
     for (const attr of attributes) {
       if (Node.isJsxAttribute(attr)) {
         const name = attr.getNameNode().getText();
-        
-        if (name === 'ref') {
+
+        if (name === "ref") {
           const initializer = attr.getInitializer();
-          
+
           if (initializer && Node.isStringLiteral(initializer)) {
             const refName = initializer.getLiteralValue();
             issues.push({
-              type: 'error',
+              type: "error",
               message: `String ref "${refName}" is deprecated - use useRef hook instead`,
               filePath,
               line: attr.getStartLineNumber(),
-              code: 'REACT19_STRING_REF',
-              framework: 'react',
+              code: "REACT19_STRING_REF",
+              framework: "react",
               fix: {
-                type: 'complex',
-                transformer: 'convertStringRefToUseRef',
+                type: "complex",
+                transformer: "convertStringRefToUseRef",
                 context: {
                   refName,
-                  startLine: attr.getStartLineNumber()
-                }
+                  startLine: attr.getStartLineNumber(),
+                },
               },
-              documentation: 'https://react.dev/reference/react/useRef',
+              documentation: "https://react.dev/reference/react/useRef",
             });
           }
         }
       }
     }
   };
-  
+
   // Check regular elements
   for (const element of jsxElements) {
     const openingElement = element.getOpeningElement();
     const attributes = openingElement.getAttributes();
     checkAttributes(attributes);
   }
-  
+
   // Check self-closing elements
   for (const element of jsxSelfClosingElements) {
     const attributes = element.getAttributes();
     checkAttributes(attributes);
   }
-  
+
   return issues;
 }
 
 /**
  * Validates findDOMNode usage
  */
-function validateFindDOMNode(sourceFile: SourceFile, filePath: string): ValidationIssue[] {
+function validateFindDOMNode(
+  sourceFile: SourceFile,
+  filePath: string,
+): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
-  
+
   // Find all calls to findDOMNode
-  const callExpressions = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression);
-  
+  const callExpressions = sourceFile.getDescendantsOfKind(
+    SyntaxKind.CallExpression,
+  );
+
   for (const call of callExpressions) {
     const expression = call.getExpression();
-    
+
     // Check for ReactDOM.findDOMNode
     if (Node.isPropertyAccessExpression(expression)) {
       const object = expression.getExpression();
       const property = expression.getName();
-      
+
       if (
-        (Node.isIdentifier(object) && object.getText() === 'ReactDOM' && property === 'findDOMNode') ||
-        (Node.isIdentifier(expression) && expression.getText() === 'findDOMNode')
+        (Node.isIdentifier(object) &&
+          object.getText() === "ReactDOM" &&
+          property === "findDOMNode") ||
+        (Node.isIdentifier(expression) &&
+          expression.getText() === "findDOMNode")
       ) {
         // Get argument to see what element is being accessed
         const args = call.getArguments();
-        const arg = args.length > 0 ? args[0].getText() : 'element';
-        
+        const arg = args.length > 0 ? args[0].getText() : "element";
+
         issues.push({
-          type: 'error',
+          type: "error",
           message: `findDOMNode is deprecated - use React refs instead`,
           filePath,
           line: call.getStartLineNumber(),
-          code: 'REACT19_FIND_DOM_NODE',
-          framework: 'react',
+          code: "REACT19_FIND_DOM_NODE",
+          framework: "react",
           fix: {
-            type: 'complex',
-            transformer: 'convertFindDOMNodeToRef',
+            type: "complex",
+            transformer: "convertFindDOMNodeToRef",
             context: {
               element: arg,
-              startLine: call.getStartLineNumber()
-            }
+              startLine: call.getStartLineNumber(),
+            },
           },
-          documentation: 'https://react.dev/reference/react-dom/findDOMNode',
+          documentation: "https://react.dev/reference/react-dom/findDOMNode",
         });
       }
     }
   }
-  
+
   return issues;
 }
 
 /**
  * Validates useFormState
  */
-function validateUseFormState(sourceFile: SourceFile, filePath: string): ValidationIssue[] {
+function validateUseFormState(
+  sourceFile: SourceFile,
+  filePath: string,
+): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
-  
+
   // Check for useFormState import
   const importDeclarations = sourceFile.getImportDeclarations();
-  
+
   for (const importDecl of importDeclarations) {
-    if (importDecl.getModuleSpecifierValue() === 'react-dom') {
+    if (importDecl.getModuleSpecifierValue() === "react-dom") {
       const namedImports = importDecl.getNamedImports();
-      const usesFormState = namedImports.some(imp => imp.getName() === 'useFormState');
-      
+      const usesFormState = namedImports.some(
+        (imp) => imp.getName() === "useFormState",
+      );
+
       if (usesFormState) {
         issues.push({
-          type: 'warning',
-          message: 'useFormState is deprecated - use useActionState instead',
+          type: "warning",
+          message: "useFormState is deprecated - use useActionState instead",
           filePath,
           line: importDecl.getStartLineNumber(),
-          code: 'REACT19_USE_FORM_STATE',
-          framework: 'react',
+          code: "REACT19_USE_FORM_STATE",
+          framework: "react",
           fix: {
-            type: 'complex',
-            transformer: 'replaceUseFormStateWithUseActionState',
+            type: "complex",
+            transformer: "replaceUseFormStateWithUseActionState",
             context: {
-              importLine: importDecl.getStartLineNumber()
-            }
+              importLine: importDecl.getStartLineNumber(),
+            },
           },
-          documentation: 'https://react.dev/reference/react/useActionState',
+          documentation: "https://react.dev/reference/react/useActionState",
         });
-        
+
         // Also find all useFormState calls and suggest updates
-        const callExpressions = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression);
-        
+        const callExpressions = sourceFile.getDescendantsOfKind(
+          SyntaxKind.CallExpression,
+        );
+
         for (const call of callExpressions) {
           const expression = call.getExpression();
-          
-          if (Node.isIdentifier(expression) && expression.getText() === 'useFormState') {
+
+          if (
+            Node.isIdentifier(expression) &&
+            expression.getText() === "useFormState"
+          ) {
             issues.push({
-              type: 'warning',
-              message: 'useFormState call should be updated to useActionState',
+              type: "warning",
+              message: "useFormState call should be updated to useActionState",
               filePath,
               line: call.getStartLineNumber(),
-              code: 'REACT19_USE_FORM_STATE_CALL',
-              framework: 'react', 
+              code: "REACT19_USE_FORM_STATE_CALL",
+              framework: "react",
               fix: {
-                type: 'replace',
-                pattern: 'useFormState',
-                replacement: 'useActionState',
-                context: 'call-expression'
+                type: "replace",
+                pattern: "useFormState",
+                replacement: "useActionState",
+                context: "call-expression",
               },
-              documentation: 'https://react.dev/reference/react/useActionState',
+              documentation: "https://react.dev/reference/react/useActionState",
             });
           }
         }
       }
     }
   }
-  
+
   return issues;
 }
 
 /**
  * Validates use hook conditional usage
  */
-function validateHookConditionalUsage(sourceFile: SourceFile, filePath: string): ValidationIssue[] {
+function validateHookConditionalUsage(
+  sourceFile: SourceFile,
+  filePath: string,
+): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
-  
+
   // Find all hook calls
-  const callExpressions = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression);
-  const hookCalls = callExpressions.filter(call => {
+  const callExpressions = sourceFile.getDescendantsOfKind(
+    SyntaxKind.CallExpression,
+  );
+  const hookCalls = callExpressions.filter((call) => {
     const expression = call.getExpression();
-    return Node.isIdentifier(expression) && expression.getText().startsWith('use');
+    return (
+      Node.isIdentifier(expression) && expression.getText().startsWith("use")
+    );
   });
-  
+
   for (const hookCall of hookCalls) {
     // Check if hook is called inside a conditional
     const ifParent = hookCall.getFirstAncestorByKind(SyntaxKind.IfStatement);
-    const ternaryParent = hookCall.getFirstAncestorByKind(SyntaxKind.ConditionalExpression);
-    const loopParent = 
-      hookCall.getFirstAncestorByKind(SyntaxKind.ForStatement) || 
-      hookCall.getFirstAncestorByKind(SyntaxKind.ForInStatement) || 
+    const ternaryParent = hookCall.getFirstAncestorByKind(
+      SyntaxKind.ConditionalExpression,
+    );
+    const loopParent =
+      hookCall.getFirstAncestorByKind(SyntaxKind.ForStatement) ||
+      hookCall.getFirstAncestorByKind(SyntaxKind.ForInStatement) ||
       hookCall.getFirstAncestorByKind(SyntaxKind.ForOfStatement) ||
       hookCall.getFirstAncestorByKind(SyntaxKind.WhileStatement);
-    
+
     // Find component/function parent to check if this is a nested function
-    const functionParent = 
+    const functionParent =
       hookCall.getFirstAncestorByKind(SyntaxKind.FunctionDeclaration) ||
       hookCall.getFirstAncestorByKind(SyntaxKind.FunctionExpression) ||
       hookCall.getFirstAncestorByKind(SyntaxKind.ArrowFunction);
-    
+
     // Find the component function if it exists
-    const componentFunction = sourceFile.getFunctions().find(func => {
+    const componentFunction = sourceFile.getFunctions().find((func) => {
       // Look for functions that return JSX
       return doesFunctionReturnJsx(func);
     });
-    
+
     // If we have a function parent, check if it's not the component function itself
     let isNestedFunction = false;
     if (functionParent && componentFunction) {
       isNestedFunction = functionParent !== componentFunction;
     }
-    
+
     if (ifParent || ternaryParent || loopParent || isNestedFunction) {
       // Get the hook name for better error message
       const expression = hookCall.getExpression();
-      const hookName = Node.isIdentifier(expression) ? expression.getText() : 'hook';
-      
+      const hookName = Node.isIdentifier(expression)
+        ? expression.getText()
+        : "hook";
+
       // Determine the exact issue
-      let issueType = 'conditional';
-      if (ifParent) issueType = 'if statement';
-      else if (ternaryParent) issueType = 'conditional (ternary) expression';
-      else if (loopParent) issueType = 'loop';
-      else if (isNestedFunction) issueType = 'nested function';
-      
+      let issueType = "conditional";
+      if (ifParent) issueType = "if statement";
+      else if (ternaryParent) issueType = "conditional (ternary) expression";
+      else if (loopParent) issueType = "loop";
+      else if (isNestedFunction) issueType = "nested function";
+
       issues.push({
-        type: 'error',
+        type: "error",
         message: `Hook "${hookName}" cannot be called inside a ${issueType}`,
         filePath,
         line: hookCall.getStartLineNumber(),
-        code: 'REACT19_CONDITIONAL_HOOK',
-        framework: 'react',
+        code: "REACT19_CONDITIONAL_HOOK",
+        framework: "react",
         fix: {
-          type: 'complex',
-          transformer: 'moveHookToTopLevel',
+          type: "complex",
+          transformer: "moveHookToTopLevel",
           context: {
             hookName,
             conditionalType: issueType,
-            startLine: hookCall.getStartLineNumber()
-          }
+            startLine: hookCall.getStartLineNumber(),
+          },
         },
-        documentation: 'https://react.dev/warnings/invalid-hook-call-warning',
+        documentation: "https://react.dev/warnings/invalid-hook-call-warning",
       });
     }
   }
-  
+
   return issues;
 }
 
 /**
  * Validates head elements in JSX
  */
-function validateHeadElementsInJSX(sourceFile: SourceFile, filePath: string): ValidationIssue[] {
+function validateHeadElementsInJSX(
+  sourceFile: SourceFile,
+  filePath: string,
+): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
-  
+
   // Check for direct manipulation of head elements
   const jsxElements = sourceFile.getDescendantsOfKind(SyntaxKind.JsxElement);
-  const jsxSelfClosingElements = sourceFile.getDescendantsOfKind(SyntaxKind.JsxSelfClosingElement);
-  
+  const jsxSelfClosingElements = sourceFile.getDescendantsOfKind(
+    SyntaxKind.JsxSelfClosingElement,
+  );
+
   // Helper function to check for head elements
   const checkHeadElements = (element: any, tagName: string) => {
-    if (tagName === 'title' || tagName === 'meta' || tagName === 'link') {
+    if (tagName === "title" || tagName === "meta" || tagName === "link") {
       // Check if it's not inside a Head component
       const isInsideHead = !!element.getAncestors().find((ancestor: any) => {
         if (Node.isJsxElement(ancestor)) {
           const openingElement = ancestor.getOpeningElement();
           const tagName = openingElement.getTagNameNode().getText();
-          return tagName === 'Head' || tagName === 'head';
+          return tagName === "Head" || tagName === "head";
         }
         return false;
       });
-      
+
       if (!isInsideHead) {
         // Check if using Next.js App Router by looking for metadata export in the file
-        const hasMetadataExport = sourceFile.getVariableDeclaration('metadata') !== undefined ||
-                               sourceFile.getFunction('generateMetadata') !== undefined;
-        
+        const hasMetadataExport =
+          sourceFile.getVariableDeclaration("metadata") !== undefined ||
+          sourceFile.getFunction("generateMetadata") !== undefined;
+
         if (!hasMetadataExport) {
           issues.push({
-            type: 'warning',
+            type: "warning",
             message: `Direct <${tagName}> elements should be inside a <Head> component or use metadata API`,
             filePath,
             line: element.getStartLineNumber(),
-            code: 'REACT19_HEAD_ELEMENTS_IN_JSX',
-            framework: 'react',
+            code: "REACT19_HEAD_ELEMENTS_IN_JSX",
+            framework: "react",
             fix: {
-              type: 'manual',
-              description: 'Use Head component or metadata API',
+              type: "manual",
+              description: "Use Head component or metadata API",
               steps: [
-                'For Next.js App Router: Use metadata API instead of direct JSX head elements',
-                'For Pages Router or other frameworks: Import Head component and wrap head elements',
+                "For Next.js App Router: Use metadata API instead of direct JSX head elements",
+                "For Pages Router or other frameworks: Import Head component and wrap head elements",
                 `<Head>
   <${tagName}>...</${tagName}>
-</Head>`
-              ]
+</Head>`,
+              ],
             },
-            documentation: 'https://nextjs.org/docs/app/building-your-application/optimizing/metadata',
+            documentation:
+              "https://nextjs.org/docs/app/building-your-application/optimizing/metadata",
           });
         }
       }
     }
   };
-  
+
   // Check regular elements
   for (const element of jsxElements) {
     const openingElement = element.getOpeningElement();
     const tagName = openingElement.getTagNameNode().getText();
     checkHeadElements(element, tagName);
   }
-  
+
   // Check self-closing elements
   for (const element of jsxSelfClosingElements) {
     const tagName = element.getTagNameNode().getText();
     checkHeadElements(element, tagName);
   }
-  
+
   return issues;
 }
 
 /**
  * Validates suspense boundaries
  */
-function validateSuspenseBoundaries(sourceFile: SourceFile, filePath: string): ValidationIssue[] {
+function validateSuspenseBoundaries(
+  sourceFile: SourceFile,
+  filePath: string,
+): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
-  
+
   // Check if this file imports the 'use' hook
-  const importsUseHook = sourceFile.getImportDeclarations().some(importDecl => {
-    if (importDecl.getModuleSpecifierValue() === 'react') {
-      const namedImports = importDecl.getNamedImports();
-      return namedImports.some(imp => imp.getName() === 'use');
-    }
-    return false;
-  });
-  
+  const importsUseHook = sourceFile
+    .getImportDeclarations()
+    .some((importDecl) => {
+      if (importDecl.getModuleSpecifierValue() === "react") {
+        const namedImports = importDecl.getNamedImports();
+        return namedImports.some((imp) => imp.getName() === "use");
+      }
+      return false;
+    });
+
   // Check for use of async components or use hook
   if (importsUseHook) {
     // Look for use calls
-    const callExpressions = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression);
-    const useCalls = callExpressions.filter(call => {
+    const callExpressions = sourceFile.getDescendantsOfKind(
+      SyntaxKind.CallExpression,
+    );
+    const useCalls = callExpressions.filter((call) => {
       const expression = call.getExpression();
-      return Node.isIdentifier(expression) && expression.getText() === 'use';
+      return Node.isIdentifier(expression) && expression.getText() === "use";
     });
-    
+
     for (const useCall of useCalls) {
       // Check if the use call is inside a Suspense component
-      const isInsideSuspense = !!useCall.getAncestors().find((ancestor: any) => {
-        if (Node.isJsxElement(ancestor)) {
-          const openingElement = ancestor.getOpeningElement();
-          const tagName = openingElement.getTagNameNode().getText();
-          return tagName === 'Suspense';
-        }
-        return false;
-      });
-      
+      const isInsideSuspense = !!useCall
+        .getAncestors()
+        .find((ancestor: any) => {
+          if (Node.isJsxElement(ancestor)) {
+            const openingElement = ancestor.getOpeningElement();
+            const tagName = openingElement.getTagNameNode().getText();
+            return tagName === "Suspense";
+          }
+          return false;
+        });
+
       if (!isInsideSuspense) {
         issues.push({
-          type: 'warning',
-          message: 'use() hook should be wrapped in a Suspense boundary',
+          type: "warning",
+          message: "use() hook should be wrapped in a Suspense boundary",
           filePath,
           line: useCall.getStartLineNumber(),
-          code: 'REACT19_MISSING_SUSPENSE',
-          framework: 'react',
+          code: "REACT19_MISSING_SUSPENSE",
+          framework: "react",
           fix: {
-            type: 'manual',
-            description: 'Wrap in Suspense boundary',
+            type: "manual",
+            description: "Wrap in Suspense boundary",
             steps: [
               "Import Suspense: import { Suspense } from 'react';",
-              'Wrap component or JSX with Suspense:',
+              "Wrap component or JSX with Suspense:",
               `<Suspense fallback={<div>Loading...</div>}>
   {/* Component using use() hook */}
-</Suspense>`
-            ]
+</Suspense>`,
+            ],
           },
-          documentation: 'https://react.dev/reference/react/Suspense',
+          documentation: "https://react.dev/reference/react/Suspense",
         });
       }
     }
   }
-  
+
   // Check for async components
   const functions = sourceFile.getFunctions();
-  const asyncComponents = functions.filter(func => {
+  const asyncComponents = functions.filter((func) => {
     return func.isAsync() && doesFunctionReturnJsx(func);
   });
-  
+
   // Also check arrow functions
   const variables = sourceFile.getVariableDeclarations();
   for (const variable of variables) {
     const initializer = variable.getInitializer();
-    
-    if (Node.isArrowFunction(initializer) && initializer.isAsync() && doesArrowFunctionReturnJsx(initializer)) {
+
+    if (
+      Node.isArrowFunction(initializer) &&
+      initializer.isAsync() &&
+      doesArrowFunctionReturnJsx(initializer)
+    ) {
       // Check if this async arrow function is used as a component
       const variableName = variable.getName();
-      
+
       // Look for JSX usage of this component in the file
-      const jsxElements = sourceFile.getDescendantsOfKind(SyntaxKind.JsxElement);
-      const jsxSelfClosingElements = sourceFile.getDescendantsOfKind(SyntaxKind.JsxSelfClosingElement);
-      
-      const isUsedAsComponent = [...jsxElements, ...jsxSelfClosingElements].some(element => {
+      const jsxElements = sourceFile.getDescendantsOfKind(
+        SyntaxKind.JsxElement,
+      );
+      const jsxSelfClosingElements = sourceFile.getDescendantsOfKind(
+        SyntaxKind.JsxSelfClosingElement,
+      );
+
+      const isUsedAsComponent = [
+        ...jsxElements,
+        ...jsxSelfClosingElements,
+      ].some((element) => {
         let tagName;
         if (Node.isJsxElement(element)) {
           tagName = element.getOpeningElement().getTagNameNode();
@@ -1264,57 +1477,57 @@ function validateSuspenseBoundaries(sourceFile: SourceFile, filePath: string): V
         }
         return tagName && tagName.getText() === variableName;
       });
-      
+
       if (isUsedAsComponent) {
         issues.push({
-          type: 'warning',
+          type: "warning",
           message: `Async component "${variableName}" should be wrapped in a Suspense boundary when used`,
           filePath,
           line: variable.getStartLineNumber(),
-          code: 'REACT19_ASYNC_COMPONENT_WITHOUT_SUSPENSE',
-          framework: 'react',
+          code: "REACT19_ASYNC_COMPONENT_WITHOUT_SUSPENSE",
+          framework: "react",
           fix: {
-            type: 'manual',
-            description: 'Wrap component in Suspense boundary',
+            type: "manual",
+            description: "Wrap component in Suspense boundary",
             steps: [
               "Import Suspense: import { Suspense } from 'react';",
-              'Wrap component usage with Suspense:',
+              "Wrap component usage with Suspense:",
               `<Suspense fallback={<div>Loading...</div>}>
   <${variableName} />
-</Suspense>`
-            ]
+</Suspense>`,
+            ],
           },
-          documentation: 'https://react.dev/reference/react/Suspense',
+          documentation: "https://react.dev/reference/react/Suspense",
         });
       }
     }
   }
-  
+
   for (const component of asyncComponents) {
-    const componentName = component.getName() || 'AsyncComponent';
-    
+    const componentName = component.getName() || "AsyncComponent";
+
     issues.push({
-      type: 'warning',
+      type: "warning",
       message: `Async component "${componentName}" should be wrapped in a Suspense boundary when used`,
       filePath,
       line: component.getStartLineNumber(),
-      code: 'REACT19_ASYNC_COMPONENT_WITHOUT_SUSPENSE',
-      framework: 'react',
+      code: "REACT19_ASYNC_COMPONENT_WITHOUT_SUSPENSE",
+      framework: "react",
       fix: {
-        type: 'manual',
-        description: 'Wrap component in Suspense boundary',
+        type: "manual",
+        description: "Wrap component in Suspense boundary",
         steps: [
           "Import Suspense: import { Suspense } from 'react';",
-          'Wrap component usage with Suspense:',
+          "Wrap component usage with Suspense:",
           `<Suspense fallback={<div>Loading...</div>}>
   <${componentName} />
-</Suspense>`
-        ]
+</Suspense>`,
+        ],
       },
-      documentation: 'https://react.dev/reference/react/Suspense',
+      documentation: "https://react.dev/reference/react/Suspense",
     });
   }
-  
+
   return issues;
 }
 
@@ -1331,6 +1544,6 @@ function isPascalCase(str: string): boolean {
 function toPascalCase(str: string): string {
   return str
     .split(/[-_\s]+/)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join('');
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join("");
 }

@@ -28,7 +28,7 @@ export const GameCard: React.FC<GameCardProps> = ({
     <div
       className={cn(
         "p-4 border rounded-lg shadow bg-white",
-        "hover:shadow-md transition-all duration-300"
+        "hover:shadow-md transition-all duration-300",
       )}
       data-testid="game-card"
     >
@@ -47,7 +47,7 @@ export const GameCard: React.FC<GameCardProps> = ({
             <span
               className={cn(
                 "inline-block px-2 py-1 rounded text-xs mr-2",
-                "bg-blue-100 text-blue-800"
+                "bg-blue-100 text-blue-800",
               )}
             >
               {gameData?.category || category}
@@ -55,7 +55,7 @@ export const GameCard: React.FC<GameCardProps> = ({
             <span
               className={cn(
                 "inline-block px-2 py-1 rounded text-xs",
-                "bg-green-100 text-green-800"
+                "bg-green-100 text-green-800",
               )}
             >
               {gameData?.level || level}
@@ -67,7 +67,7 @@ export const GameCard: React.FC<GameCardProps> = ({
         onClick={handlePlayClick}
         className={cn(
           "mt-4 w-full py-2 px-4 rounded font-medium",
-          "bg-purple-600 hover:bg-purple-700 text-white"
+          "bg-purple-600 hover:bg-purple-700 text-white",
         )}
         aria-label={`Play ${gameData?.title || title}`}
       >

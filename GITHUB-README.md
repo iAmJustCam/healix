@@ -1,6 +1,6 @@
 # Healix
 
-[![npm version](https://img.shields.io/npm/v/healix.svg)](https://www.npmjs.com/package/healix)
+![Project Status: Development](https://img.shields.io/badge/Project%20Status-Development-brightgreen)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **🩺 Healix** is a CLI tool that diagnoses and heals your codebase, keeping it healthy and aligned with modern best practices. It detects issues in React components, hooks, and other code patterns, then intelligently applies fixes.
@@ -8,6 +8,10 @@
 Specialized in healing modern web development frameworks: React 19, Next.js 15, TypeScript 5, and Tailwind v4.
 
 ## ⚡ Quickstart
+
+⚠️ **Coming Soon:** This project is currently in development and will be available on npm soon.
+
+When released:
 
 ```bash
 npx healix health

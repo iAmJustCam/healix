@@ -7,7 +7,7 @@ import { vi } from "vitest";
  */
 export function mockReactUse<T>(data: T): void {
   vi.mock("react", async () => {
-    const actual = await vi.importActual("react") as Record<string, unknown>;
+    const actual = (await vi.importActual("react")) as Record<string, unknown>;
     return {
       ...actual,
       use: vi.fn(() => data),

@@ -1,0 +1,39 @@
+{
+  "name": "healix",
+  "version": "0.1.0",
+  "description": "A modern codebase healing system for React 19, Next.js 15, TypeScript 5, and Tailwind v4",
+  "bin": {
+    "healix": "./cli.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "react",
+    "nextjs",
+    "typescript",
+    "tailwind",
+    "vitest",
+    "validation",
+    "healing",
+    "testing"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^11.0.0",
+    "figlet": "^1.6.0",
+    "glob": "^11.0.1",
+    "minimatch": "^9.0.3",
+    "ora": "^5.4.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iAmJustCam/healix.git"
+  },
+  "bugs": {
+    "url": "https://github.com/iAmJustCam/healix/issues"
+  },
+  "homepage": "https://github.com/iAmJustCam/healix#readme"
+}
