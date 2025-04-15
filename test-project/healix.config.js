@@ -1,12 +1,13 @@
 /**
- * Configuration for the Tech Stack Alignment System
+ * Configuration for Healix - Modern Codebase Healing System
+ * Test project example configuration
  */
 module.exports = {
   // Strictness level
   strict: true,
 
   // Directories to analyze
-  include: ['src/**/*.{ts,tsx,js,jsx}'],
+  include: ['./src/**/*.{ts,tsx,js,jsx}'],
   exclude: ['**/*.d.ts', '**/*.test.{ts,tsx}', '**/node_modules/**'],
 
   // Framework versions
